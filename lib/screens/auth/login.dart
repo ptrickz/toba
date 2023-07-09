@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:toba/screens/auth/signup.dart';
 import 'package:toba/screens/home/home.dart';
 import 'package:toba/screens/home/sellerHome.dart';
-
 import '../../widgets/button.dart';
 import '../../widgets/inputfield.dart';
 
@@ -193,58 +192,51 @@ class _LoginPageState extends State<LoginPage> {
         isLoading = true;
       });
       try {
-        await FirebaseAuth.instance
-            .signInWithEmailAndPassword(
-                email: emailController.text.trim(),
-                password: passwordController.text.trim())
-            .then((value) {
-          setState(() {
-            isLoading = false;
-          });
-          Navigator.pushReplacement(context,
-              MaterialPageRoute(builder: (context) => const HomePage()));
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(emailController.text
+                .trim()
+                .substring(0, emailController.text.trim().indexOf("@")))
+            .get()
+            .then((doc) {
+          if (doc.exists) {
+            FirebaseAuth.instance
+                .signInWithEmailAndPassword(
+                    email: emailController.text.trim(),
+                    password: passwordController.text.trim())
+                .then((value) {
+              setState(() {
+                isLoading = false;
+              });
+              doc['seller']
+                  ? Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const SellerHome()))
+                  : Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const HomePage()));
+            }).catchError((e) {
+              setState(() {
+                isLoading = false;
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(e.toString())),
+              );
+            });
+          } else if (!doc.exists) {
+            setState(() {
+              isLoading = false;
+            });
+            alertBox("No such user!", "Please sign up first");
+          } else {
+            setState(() {
+              isLoading = false;
+            });
+            alertBox("Connection Error!", "Please try again later");
+          }
         });
-        // await FirebaseFirestore.instance
-        //     .collection('users')
-        //     .doc(matricController.text.trim())
-        //     .get()
-        //     .then((doc) {
-        //   if (doc.exists) {
-        //     FirebaseAuth.instance
-        //         .signInWithEmailAndPassword(
-        //             email: doc['email'], password: passwordController.text)
-        //         .then((value) {
-        //       setState(() {
-        //         isLoading = false;
-        //       });
-        //       doc['staff'] == true
-        //           ? Navigator.pushReplacement(
-        //               context,
-        //               MaterialPageRoute(
-        //                   builder: (context) => const SellerHome()))
-        //           : Navigator.pushReplacement(
-        //               context,
-        //               MaterialPageRoute(
-        //                   builder: (context) => const HomePage()));
-        //     }).catchError((e) {
-        //       setState(() {
-        //         isLoading = false;
-        //       });
-        //       alertBox("Wrong Credentials!",
-        //           "Wrong password or matric no, try again");
-        //     });
-        //   } else if (!doc.exists) {
-        //     setState(() {
-        //       isLoading = false;
-        //     });
-        //     alertBox("No such user!", "Please sign up first");
-        //   } else {
-        //     setState(() {
-        //       isLoading = false;
-        //     });
-        //     alertBox("Connection Error!", "Please try again later");
-        //   }
-        // });
       } catch (e) {
         setState(() {
           isLoading = false;
