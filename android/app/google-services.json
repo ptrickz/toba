@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1073067402412",
+    "project_id": "toba-733b5",
+    "storage_bucket": "toba-733b5.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1073067402412:android:579e75325a3b3483826b09",
+        "android_client_info": {
+          "package_name": "com.example.toba"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1073067402412-g41337fggv5bf6qk5g6dbq76f8guajmg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC-qdKAIz6ZhVlWHKZKgJN3g8GopFBqTGo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1073067402412-g41337fggv5bf6qk5g6dbq76f8guajmg.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
