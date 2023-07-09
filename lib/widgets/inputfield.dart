@@ -48,7 +48,7 @@ class _InputFieldState extends State<InputField> {
             borderRadius: BorderRadius.circular(8),
           ),
           labelText: widget.labelText,
-          hintText: "Enter your ${widget.labelText}",
+          hintText: widget.labelText,
           prefixIcon: Icon(widget.icondata),
         ),
         controller: widget.controller,

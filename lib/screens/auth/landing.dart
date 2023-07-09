@@ -1,9 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:toba/screens/auth/signup.dart';
-import 'package:toba/screens/home/home.dart';
 
 import '../../widgets/button.dart';
+import 'authenticate.dart';
 import 'login.dart';
 
 class LandingPage extends StatefulWidget {
@@ -45,7 +45,7 @@ class _LandingPageState extends State<LandingPage> {
                 ));
               } else {
                 if (snapshot.hasData) {
-                  return const HomePage();
+                  return const Authenticate();
                 } else {
                   return Scaffold(
                       body: Center(
