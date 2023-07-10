@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:toba/screens/order/orders.dart';
 
@@ -59,7 +60,22 @@ class Default extends StatefulWidget {
 }
 
 class _DefaultState extends State<Default> {
-  RegExp regExp =
+  final cartref = FirebaseFirestore.instance
+      .collection('cart')
+      .where('email', isEqualTo: FirebaseAuth.instance.currentUser!.email)
+      .snapshots();
+  int cartItemQuantity = 0;
+  @override
+  void initState() {
+    super.initState();
+    cartref.listen((event) {
+      setState(() {
+        cartItemQuantity = event.docs.length;
+      });
+    });
+  }
+
+  final RegExp regExp =
       RegExp(r'(I[A-Za-z0-9]+(_[A-Za-z0-9]+|-[A-Za-z0-9]+)+)\.[A-Za-z]{3}');
   @override
   Widget build(BuildContext context) {
@@ -69,12 +85,16 @@ class _DefaultState extends State<Default> {
         centerTitle: true,
         automaticallyImplyLeading: false,
         actions: [
-          IconButton(
-              onPressed: () {
-                Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => const Cart()));
-              },
-              icon: const Icon(Icons.shopping_cart))
+          Badge.count(
+              largeSize: 20,
+              alignment: Alignment.topLeft,
+              count: cartItemQuantity,
+              child: IconButton(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                        MaterialPageRoute(builder: (context) => const Cart()));
+                  },
+                  icon: const Icon(Icons.shopping_cart))),
         ],
       ),
       body: StreamBuilder<QuerySnapshot>(
@@ -117,7 +137,8 @@ class _DefaultState extends State<Default> {
                         Navigator.of(context).push(MaterialPageRoute(
                             builder: (context) => ProductDetails(
                                   productName: data['name'],
-                                  price: data['price'],
+                                  price: double.parse(data['price'])
+                                      .toStringAsFixed(2),
                                   description: data['description'],
                                   quantity: data['quantity'],
                                   image: imageAfterRegex,
@@ -138,8 +159,13 @@ class _DefaultState extends State<Default> {
                                     child: FadeInImage(
                                       placeholder: const AssetImage(
                                           "assets/loading.gif"),
-                                      image: NetworkImage(
-                                          snapshot.data!.docs[index]['imgURL']),
+                                      image: int.parse(snapshot.data!
+                                                  .docs[index]['quantity']) <=
+                                              0
+                                          ? const NetworkImage(
+                                              "https://www.seekpng.com/png/small/118-1182523_out-of-stock-png.png")
+                                          : NetworkImage(snapshot
+                                              .data!.docs[index]['imgURL']),
                                       fit: BoxFit.fill,
                                     ),
                                   ),
@@ -160,28 +186,62 @@ class _DefaultState extends State<Default> {
                                               children: [
                                                 Text(
                                                   data['name'],
-                                                  style: const TextStyle(
+                                                  style: TextStyle(
                                                       fontWeight:
                                                           FontWeight.bold,
-                                                      color: Colors.lightGreen,
+                                                      color: int.parse(snapshot
+                                                                          .data!
+                                                                          .docs[
+                                                                      index][
+                                                                  'quantity']) <=
+                                                              0
+                                                          ? Colors.grey
+                                                          : Colors.lightGreen,
                                                       fontSize: 18),
                                                 ),
-                                                // ignore: prefer_interpolation_to_compose_strings
-                                                Text("RM " + data['price']),
-                                                Text(data['description']),
+                                                Text(
+                                                  // ignore: prefer_interpolation_to_compose_strings
+                                                  "RM " +
+                                                      double.parse(
+                                                              data['price'])
+                                                          .toStringAsFixed(2),
+                                                  style: TextStyle(
+                                                    color: int.parse(snapshot
+                                                                    .data!
+                                                                    .docs[index]
+                                                                ['quantity']) <=
+                                                            0
+                                                        ? Colors.grey
+                                                        : Colors.black,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  data['description'],
+                                                  style: TextStyle(
+                                                    color: int.parse(snapshot
+                                                                    .data!
+                                                                    .docs[index]
+                                                                ['quantity']) <=
+                                                            0
+                                                        ? Colors.grey
+                                                        : Colors.black,
+                                                  ),
+                                                ),
                                               ],
                                             ),
                                           ),
                                         ),
-                                        const SizedBox(
-                                            width: 50,
-                                            height: 200,
-                                            child: Center(
-                                              child: Icon(
-                                                Icons.chevron_right,
-                                                color: Colors.lightGreen,
-                                              ),
-                                            )),
+                                        Center(
+                                          child: Icon(
+                                            Icons.chevron_right,
+                                            color: int.parse(snapshot
+                                                            .data!.docs[index]
+                                                        ['quantity']) <=
+                                                    0
+                                                ? Colors.grey
+                                                : Colors.lightGreen,
+                                          ),
+                                        ),
                                       ],
                                     ),
                                   ),

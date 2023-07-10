@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:easy_image_viewer/easy_image_viewer.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -121,7 +122,7 @@ class _ProductDetailsState extends State<ProductDetails> {
                           : widget.productName!,
                       price: priceController.text.trim() != ""
                           ? priceController.text.trim()
-                          : widget.price!,
+                          : double.parse(widget.price!).toStringAsFixed(2),
                       description: descriptionController.text.trim() != ""
                           ? descriptionController.text.trim()
                           : widget.description!,
@@ -223,12 +224,15 @@ class _ProductDetailsState extends State<ProductDetails> {
                         isEnabled: isEditing,
                         isPassword: false,
                         hasInitValue: true,
-                        labelText: snapshot.data!.docs[0]['price'],
+                        labelText: double.parse(snapshot.data!.docs[0]['price'])
+                            .toStringAsFixed(2),
                         icondata: Icons.attach_money_outlined,
                         controller: isEditing
                             ? priceController
                             : TextEditingController(
-                                text: snapshot.data!.docs[0]['price']),
+                                text: double.parse(
+                                        snapshot.data!.docs[0]['price'])
+                                    .toStringAsFixed(2)),
                         isAuthField: false,
                         keyboardType: TextInputType.number,
                       ),
@@ -248,7 +252,6 @@ class _ProductDetailsState extends State<ProductDetails> {
                                   color: Colors.grey.shade400, width: 1.0),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            labelText: snapshot.data!.docs[0]['description'],
                             hintText: "Enter Short Description",
                             prefixIcon: const Icon(Icons.description),
                           ),
@@ -298,50 +301,84 @@ class _ProductDetailsState extends State<ProductDetails> {
                                 });
                               },
                               isRed: true)
-                          : MyButton(
-                              isRed: false,
-                              text: widget.isSeller == true
-                                  ? "Edit Product"
-                                  : "Add to Cart",
-                              onPressed: () {
-                                widget.isSeller == true
-                                    ? setState(() {
-                                        isEditing = true;
-                                      })
-                                    : setState(() {
-                                        isLoading = true;
-                                      });
-                                addItemBox("Add to Cart?",
-                                    "Insert Number of Items to add to cart.",
-                                    () {
-                                  createCartItems(
-                                          name: widget.productName!,
-                                          price: widget.price!,
-                                          quantity: addController.text.trim(),
-                                          image: snapshot.data!.docs[0]
-                                              ['imgURL'],
-                                          date: DateTime.now())
-                                      .then((value) {
-                                    try {
-                                      reduceQuantity();
-                                    } catch (e) {
-                                      if (kDebugMode) {
-                                        print(e);
+                          : int.parse(snapshot.data!.docs[0]['quantity']) > 0
+                              ? MyButton(
+                                  isRed: false,
+                                  text: widget.isSeller == true
+                                      ? "Edit Product"
+                                      : "Add to Cart",
+                                  onPressed: () {
+                                    widget.isSeller == true
+                                        ? setState(() {
+                                            isEditing = true;
+                                          })
+                                        : setState(() {
+                                            isLoading = true;
+                                          });
+                                    addItemBox("Add to Cart?",
+                                        "Insert Number of Items to add to cart.",
+                                        () {
+                                      String dateF = DateTime.now()
+                                          .toString()
+                                          .substring(0, 10);
+                                      String time = DateTime.now()
+                                          .toString()
+                                          .substring(10, 19)
+                                          .replaceAll(" ", "")
+                                          .replaceAll(":", "");
+                                      String emailFormatted = FirebaseAuth
+                                          .instance.currentUser!.email!
+                                          .toLowerCase()
+                                          .replaceAll("@gmail.com", "")
+                                          .replaceAll("@yahoo.com", "")
+                                          .toUpperCase();
+
+                                      if (int.parse(
+                                              addController.text.trim()) <=
+                                          int.parse(widget.quantity!)) {
+                                        createCartItems(
+                                                email: FirebaseAuth.instance
+                                                    .currentUser!.email!,
+                                                id:
+                                                    "$emailFormatted-$time-$dateF",
+                                                name: widget.productName!,
+                                                price:
+                                                    double.parse(widget.price!)
+                                                        .toStringAsFixed(2),
+                                                quantity:
+                                                    addController.text.trim(),
+                                                image: snapshot.data!.docs[0]
+                                                    ['imgURL'],
+                                                date: DateTime.now())
+                                            .then((value) {
+                                          try {
+                                            reduceQuantity();
+                                          } catch (e) {
+                                            if (kDebugMode) {
+                                              print(e);
+                                            }
+                                          }
+                                        }).then((value) {
+                                          setState(() {
+                                            isLoading = false;
+                                          });
+                                          Navigator.of(context).pushReplacement(
+                                              MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      widget.isSeller == true
+                                                          ? const SellerHome()
+                                                          : const HomePage()));
+                                        });
+                                      } else {
+                                        alertBox("Error",
+                                            "Quantity is more than available stock.",
+                                            () {
+                                          Navigator.pop(context);
+                                        });
                                       }
-                                    }
-                                  }).then((value) {
-                                    setState(() {
-                                      isLoading = false;
                                     });
-                                    Navigator.of(context).pushReplacement(
-                                        MaterialPageRoute(
-                                            builder: (context) =>
-                                                widget.isSeller == true
-                                                    ? const SellerHome()
-                                                    : const HomePage()));
-                                  });
-                                });
-                              }),
+                                  })
+                              : const SizedBox.shrink(),
                     ),
                   ],
                 ),
@@ -361,7 +398,7 @@ class _ProductDetailsState extends State<ProductDetails> {
         .doc("T-${widget.productName}")
         .update({
       'quantity': (quantity - cartQuantity).toString() == "0"
-          ? "Out of Stock"
+          ? "0"
           : (quantity - cartQuantity).toString(),
     });
   }
@@ -392,22 +429,18 @@ class _ProductDetailsState extends State<ProductDetails> {
 }
 
 Future createCartItems({
+  required String id,
+  required String email,
   required String name,
   required String price,
   required String quantity,
   required String image,
   required DateTime date,
 }) async {
-  String time = DateTime.now()
-      .toString()
-      .substring(10, 19)
-      .replaceAll(" ", "")
-      .replaceAll(":", "");
-  String dateF = DateTime.now().toString().substring(0, 10);
   //refer doc
-  final docCart =
-      FirebaseFirestore.instance.collection("cart").doc("C-$name-$time-$dateF");
+  final docCart = FirebaseFirestore.instance.collection("cart").doc(id);
   final cart = CartItem(
+    email: email,
     name: name,
     price: price,
     quantity: quantity,
@@ -425,6 +458,7 @@ Future createCartItems({
 }
 
 class CartItem {
+  final String email;
   final String name;
   final String price;
   final String quantity;
@@ -432,6 +466,7 @@ class CartItem {
   final DateTime date;
 
   CartItem({
+    required this.email,
     required this.name,
     required this.price,
     required this.quantity,
@@ -440,6 +475,7 @@ class CartItem {
   });
   factory CartItem.fromJson(Map<String, dynamic> json) {
     return CartItem(
+      email: json["email"],
       name: json["name"],
       price: json["price"],
       quantity: json["quantity"],
@@ -449,6 +485,7 @@ class CartItem {
   }
   Map<String, dynamic> toJson() {
     return {
+      "email": email,
       "name": name,
       "price": price,
       "quantity": quantity,

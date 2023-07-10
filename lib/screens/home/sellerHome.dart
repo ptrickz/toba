@@ -119,7 +119,8 @@ class _DefaultState extends State<Default> {
                         Navigator.of(context).push(MaterialPageRoute(
                             builder: (context) => ProductDetails(
                                   productName: data['name'],
-                                  price: data['price'],
+                                  price: double.parse(data['price'])
+                                      .toStringAsFixed(2),
                                   description: data['description'],
                                   quantity: data['quantity'],
                                   image: imageAfterRegex,
@@ -169,21 +170,20 @@ class _DefaultState extends State<Default> {
                                                       fontSize: 18),
                                                 ),
                                                 // ignore: prefer_interpolation_to_compose_strings
-                                                Text("RM " + data['price']),
+                                                Text("RM " +
+                                                    double.parse(data['price'])
+                                                        .toStringAsFixed(2)),
                                                 Text(data['description']),
                                               ],
                                             ),
                                           ),
                                         ),
-                                        const SizedBox(
-                                            width: 50,
-                                            height: 200,
-                                            child: Center(
-                                              child: Icon(
-                                                Icons.chevron_right,
-                                                color: Colors.lightGreen,
-                                              ),
-                                            )),
+                                        const Center(
+                                          child: Icon(
+                                            Icons.chevron_right,
+                                            color: Colors.lightGreen,
+                                          ),
+                                        ),
                                       ],
                                     ),
                                   ),
