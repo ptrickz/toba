@@ -1,5 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:easy_image_viewer/easy_image_viewer.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:toba/screens/home/home.dart';
 import 'package:toba/screens/home/sellerHome.dart';
 
 import '../../../widgets/button.dart';
@@ -7,11 +11,19 @@ import '../../../widgets/inputfield.dart';
 
 class ProductDetails extends StatefulWidget {
   final String? productName;
+  final String? price;
+  final String? description;
+  final String? quantity;
+  final String? image;
   final bool? isSeller;
   const ProductDetails({
     super.key,
     this.productName,
     this.isSeller,
+    this.price,
+    this.description,
+    this.quantity,
+    this.image,
   });
 
   @override
@@ -23,6 +35,7 @@ class _ProductDetailsState extends State<ProductDetails> {
   final TextEditingController priceController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
   final TextEditingController quantityController = TextEditingController();
+  final TextEditingController addController = TextEditingController();
   bool isLoading = false;
   bool isEditing = false;
 
@@ -41,6 +54,36 @@ class _ProductDetailsState extends State<ProductDetails> {
         builder: (context) => AlertDialog(
               title: Text(title),
               content: Text(message),
+              actions: [
+                TextButton(onPressed: onPressed, child: const Text("OK"))
+              ],
+            ));
+  }
+
+  addItemBox(String title, String message, VoidCallback onPressed) async {
+    return showDialog(
+        barrierDismissible: true,
+        context: context,
+        builder: (context) => AlertDialog(
+              title: Text(title),
+              content: SizedBox(
+                height: 100,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(message),
+                    InputField(
+                        isAuthField: false,
+                        keyboardType: TextInputType.number,
+                        labelText: "Quantity",
+                        icondata: Icons.numbers,
+                        controller: addController,
+                        hasInitValue: false,
+                        isPassword: false),
+                  ],
+                ),
+              ),
               actions: [
                 TextButton(onPressed: onPressed, child: const Text("OK"))
               ],
@@ -73,10 +116,18 @@ class _ProductDetailsState extends State<ProductDetails> {
               ? IconButton(
                   onPressed: () {
                     updateProduct(
-                      name: nameController.text.trim(),
-                      price: priceController.text.trim(),
-                      description: descriptionController.text.trim(),
-                      quantity: quantityController.text.trim(),
+                      name: nameController.text.trim() != ""
+                          ? nameController.text.trim()
+                          : widget.productName!,
+                      price: priceController.text.trim() != ""
+                          ? priceController.text.trim()
+                          : widget.price!,
+                      description: descriptionController.text.trim() != ""
+                          ? descriptionController.text.trim()
+                          : widget.description!,
+                      quantity: quantityController.text.trim() != ""
+                          ? quantityController.text.trim()
+                          : widget.quantity!,
                     ).then((value) => Navigator.pop(context));
                   },
                   icon: const Icon(Icons.check))
@@ -117,20 +168,27 @@ class _ProductDetailsState extends State<ProductDetails> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.grey[100],
-                        shape: BoxShape.rectangle,
-                        border: const Border(
-                          top: BorderSide(width: 2.0, color: Colors.black),
-                          left: BorderSide(width: 2.0, color: Colors.black),
-                          right: BorderSide(width: 2.0, color: Colors.black),
-                          bottom: BorderSide(width: 2.0, color: Colors.black),
-                        ),
-                      ),
-                      width: 340,
-                      height: 250,
-                      child: Expanded(
+                    GestureDetector(
+                      onTap: () {
+                        final imageProvider =
+                            Image.network(snapshot.data!.docs[0]['imgURL'])
+                                .image;
+                        showImageViewer(context, imageProvider,
+                            onViewerDismissed: () {});
+                      },
+                      child: Container(
+                        decoration:
+                            BoxDecoration(color: Colors.grey[100], boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.5),
+                            spreadRadius: 2,
+                            blurRadius: 5,
+                            offset: const Offset(
+                                0, 3), // changes position of shadow
+                          ),
+                        ]),
+                        width: 340,
+                        height: 250,
                         child: SizedBox(
                           width: 120,
                           height: 150,
@@ -229,11 +287,14 @@ class _ProductDetailsState extends State<ProductDetails> {
                                   final docBooking = FirebaseFirestore.instance
                                       .collection('products')
                                       .doc("T-${widget.productName}");
+                                  final imageRef = FirebaseStorage.instance
+                                      .ref("images/${widget.image}");
                                   Navigator.of(context).pushReplacement(
                                       MaterialPageRoute(
                                           builder: (context) =>
                                               const SellerHome()));
                                   docBooking.delete();
+                                  imageRef.delete();
                                 });
                               },
                               isRed: true)
@@ -250,6 +311,36 @@ class _ProductDetailsState extends State<ProductDetails> {
                                     : setState(() {
                                         isLoading = true;
                                       });
+                                addItemBox("Add to Cart?",
+                                    "Insert Number of Items to add to cart.",
+                                    () {
+                                  createCartItems(
+                                          name: widget.productName!,
+                                          price: widget.price!,
+                                          quantity: addController.text.trim(),
+                                          image: snapshot.data!.docs[0]
+                                              ['imgURL'],
+                                          date: DateTime.now())
+                                      .then((value) {
+                                    try {
+                                      reduceQuantity();
+                                    } catch (e) {
+                                      if (kDebugMode) {
+                                        print(e);
+                                      }
+                                    }
+                                  }).then((value) {
+                                    setState(() {
+                                      isLoading = false;
+                                    });
+                                    Navigator.of(context).pushReplacement(
+                                        MaterialPageRoute(
+                                            builder: (context) =>
+                                                widget.isSeller == true
+                                                    ? const SellerHome()
+                                                    : const HomePage()));
+                                  });
+                                });
                               }),
                     ),
                   ],
@@ -260,6 +351,19 @@ class _ProductDetailsState extends State<ProductDetails> {
         },
       ),
     );
+  }
+
+  Future reduceQuantity() async {
+    final int quantity = int.parse(widget.quantity!);
+    final int cartQuantity = int.parse(addController.text.trim());
+    await FirebaseFirestore.instance
+        .collection('products')
+        .doc("T-${widget.productName}")
+        .update({
+      'quantity': (quantity - cartQuantity).toString() == "0"
+          ? "Out of Stock"
+          : (quantity - cartQuantity).toString(),
+    });
   }
 
   Future updateProduct({
@@ -284,5 +388,72 @@ class _ProductDetailsState extends State<ProductDetails> {
         .collection('products')
         .where('name', isEqualTo: widget.productName)
         .snapshots();
+  }
+}
+
+Future createCartItems({
+  required String name,
+  required String price,
+  required String quantity,
+  required String image,
+  required DateTime date,
+}) async {
+  String time = DateTime.now()
+      .toString()
+      .substring(10, 19)
+      .replaceAll(" ", "")
+      .replaceAll(":", "");
+  String dateF = DateTime.now().toString().substring(0, 10);
+  //refer doc
+  final docCart =
+      FirebaseFirestore.instance.collection("cart").doc("C-$name-$time-$dateF");
+  final cart = CartItem(
+    name: name,
+    price: price,
+    quantity: quantity,
+    image: image,
+    date: date,
+  );
+  final json = cart.toJson();
+  try {
+    await docCart.set(json);
+  } catch (e) {
+    if (kDebugMode) {
+      print(e);
+    }
+  }
+}
+
+class CartItem {
+  final String name;
+  final String price;
+  final String quantity;
+  final String image;
+  final DateTime date;
+
+  CartItem({
+    required this.name,
+    required this.price,
+    required this.quantity,
+    required this.image,
+    required this.date,
+  });
+  factory CartItem.fromJson(Map<String, dynamic> json) {
+    return CartItem(
+      name: json["name"],
+      price: json["price"],
+      quantity: json["quantity"],
+      image: json["image"],
+      date: json["date"],
+    );
+  }
+  Map<String, dynamic> toJson() {
+    return {
+      "name": name,
+      "price": price,
+      "quantity": quantity,
+      "image": image,
+      "date": date,
+    };
   }
 }

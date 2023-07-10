@@ -47,7 +47,6 @@ class _InputFieldState extends State<InputField> {
             borderSide: BorderSide(color: Colors.grey.shade400, width: 1.0),
             borderRadius: BorderRadius.circular(8),
           ),
-          labelText: widget.labelText,
           hintText: widget.labelText,
           prefixIcon: Icon(widget.icondata),
         ),

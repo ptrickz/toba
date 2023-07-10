@@ -60,6 +60,9 @@ class Default extends StatefulWidget {
 }
 
 class _DefaultState extends State<Default> {
+  RegExp regExp =
+      RegExp(r'(I[A-Za-z0-9]+(_[A-Za-z0-9]+|-[A-Za-z0-9]+)+)\.[A-Za-z]{3}');
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -102,92 +105,94 @@ class _DefaultState extends State<Default> {
               height: MediaQuery.of(context).size.height,
               width: MediaQuery.of(context).size.width,
               child: SingleChildScrollView(
-                child: ListView(
+                child: ListView.builder(
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: snapshot.data!.docs.length,
                   shrinkWrap: true,
-                  children: snapshot.data!.docs
-                      .map((DocumentSnapshot document) {
-                        Map<String, dynamic> data =
-                            document.data()! as Map<String, dynamic>;
-                        return GestureDetector(
-                          onTap: () {
-                            Navigator.of(context).push(MaterialPageRoute(
-                                builder: (context) => ProductDetails(
-                                      productName: data['name'],
-                                      isSeller: true,
-                                    )));
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: SizedBox(
-                              height: 150,
-                              child: Card(
-                                  clipBehavior: Clip.antiAliasWithSaveLayer,
-                                  child: Row(
-                                    children: [
-                                      SizedBox(
-                                        width: 120,
-                                        height: 150,
-                                        child: FadeInImage(
-                                          placeholder: const AssetImage(
-                                              "assets/loading.gif"),
-                                          image: NetworkImage(
-                                              snapshot.data!.docs[0]['imgURL']),
-                                          fit: BoxFit.fill,
-                                        ),
-                                      ),
-                                      SizedBox(
-                                        width: 245,
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            SizedBox(
-                                              width: 180,
-                                              child: Padding(
-                                                padding:
-                                                    const EdgeInsets.all(10.0),
-                                                child: Column(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.start,
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    Text(
-                                                      data['name'],
-                                                      style: const TextStyle(
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          color:
-                                                              Colors.lightGreen,
-                                                          fontSize: 18),
-                                                    ),
-                                                    // ignore: prefer_interpolation_to_compose_strings
-                                                    Text("RM " + data['price']),
-                                                    Text(data['description']),
-                                                  ],
+                  itemBuilder: (context, index) {
+                    final imageAfterRegex = regExp
+                        .stringMatch(snapshot.data!.docs[index]['imgURL']);
+
+                    final data = snapshot.data!.docs[index];
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).push(MaterialPageRoute(
+                            builder: (context) => ProductDetails(
+                                  productName: data['name'],
+                                  price: data['price'],
+                                  description: data['description'],
+                                  quantity: data['quantity'],
+                                  image: imageAfterRegex,
+                                  isSeller: true,
+                                )));
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: SizedBox(
+                          height: 150,
+                          child: Card(
+                              clipBehavior: Clip.antiAliasWithSaveLayer,
+                              child: Row(
+                                children: [
+                                  SizedBox(
+                                    width: 150,
+                                    height: 150,
+                                    child: FadeInImage(
+                                      placeholder: const AssetImage(
+                                          "assets/loading.gif"),
+                                      image: NetworkImage(
+                                          snapshot.data!.docs[index]['imgURL']),
+                                      fit: BoxFit.fill,
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        SizedBox(
+                                          width: 180,
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(10.0),
+                                            child: Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.start,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  data['name'],
+                                                  style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: Colors.lightGreen,
+                                                      fontSize: 18),
                                                 ),
-                                              ),
+                                                // ignore: prefer_interpolation_to_compose_strings
+                                                Text("RM " + data['price']),
+                                                Text(data['description']),
+                                              ],
                                             ),
-                                            const SizedBox(
-                                                width: 50,
-                                                height: 200,
-                                                child: Center(
-                                                  child: Icon(
-                                                    Icons.chevron_right,
-                                                    color: Colors.lightGreen,
-                                                  ),
-                                                )),
-                                          ],
+                                          ),
                                         ),
-                                      ),
-                                    ],
-                                  )),
-                            ),
-                          ),
-                        );
-                      })
-                      .toList()
-                      .cast(),
+                                        const SizedBox(
+                                            width: 50,
+                                            height: 200,
+                                            child: Center(
+                                              child: Icon(
+                                                Icons.chevron_right,
+                                                color: Colors.lightGreen,
+                                              ),
+                                            )),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              )),
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
             );
