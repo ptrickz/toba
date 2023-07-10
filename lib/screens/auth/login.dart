@@ -90,6 +90,10 @@ class _LoginPageState extends State<LoginPage> {
                             const Padding(
                                 padding: EdgeInsets.all(20.0),
                                 child: CircularProgressIndicator.adaptive()),
+                            const Padding(
+                              padding: EdgeInsets.all(20.0),
+                              child: Text("Logging in..."),
+                            )
                           ],
                         ),
                       )

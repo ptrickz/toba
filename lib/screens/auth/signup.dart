@@ -96,6 +96,10 @@ class _SignUpState extends State<SignUp> {
                             const Padding(
                                 padding: EdgeInsets.all(10.0),
                                 child: CircularProgressIndicator.adaptive()),
+                            const Padding(
+                              padding: EdgeInsets.all(20.0),
+                              child: Text("Signing up..."),
+                            )
                           ],
                         ),
                       )
