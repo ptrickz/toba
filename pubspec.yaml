@@ -40,6 +40,12 @@ dependencies:
   file_picker: ^5.3.2
   firebase_storage: ^11.2.4
   easy_image_viewer: ^1.2.1
+  flutter_launcher_icons: ^0.13.1
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/launcher.png"
 
 dev_dependencies:
   flutter_test:
