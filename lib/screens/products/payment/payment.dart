@@ -189,12 +189,13 @@ class _PaymentPageState extends State<PaymentPage> {
                         createOrder(
                           name: data['name'],
                           email: value['email'],
+                          image: data['image'],
                           address: value['address'],
                           phone: value['phoneNo'],
                           quantity: data['quantity'],
                           paymentMethod: describeEnum(_paymentMethod!),
                           total: subTotal,
-                          orderStatus: "In the Kitchen",
+                          orderStatus: "Making Order",
                           orderDate: dateF,
                           orderTime: time,
                           orderID: emailFormatted + dateF + time,
@@ -247,6 +248,7 @@ class _PaymentPageState extends State<PaymentPage> {
   Future createOrder({
     required String name,
     required String email,
+    required String image,
     required String address,
     required String phone,
     required String quantity,
@@ -262,6 +264,7 @@ class _PaymentPageState extends State<PaymentPage> {
     final order = Order(
       name: name,
       email: email,
+      image: image,
       address: address,
       phone: phone,
       quantity: quantity,
@@ -286,6 +289,7 @@ class _PaymentPageState extends State<PaymentPage> {
 class Order {
   final String name;
   final String email;
+  final String image;
   final String address;
   final String phone;
   final String quantity;
@@ -299,6 +303,7 @@ class Order {
   Order({
     required this.name,
     required this.email,
+    required this.image,
     required this.address,
     required this.phone,
     required this.quantity,
@@ -313,6 +318,7 @@ class Order {
     return Order(
       name: data['name'],
       email: data['email'],
+      image: data['image'],
       address: data['address'],
       phone: data['phone'],
       quantity: data['quantity'],
@@ -328,6 +334,7 @@ class Order {
     return {
       'name': name,
       'email': email,
+      'image': image,
       'address': address,
       'phone': phone,
       'quantity': quantity,

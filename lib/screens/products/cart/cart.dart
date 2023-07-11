@@ -62,9 +62,24 @@ class _CartState extends State<Cart> {
               );
             }
 
-            if (snapshot.data == null) {
-              return const Center(
-                child: Text("No products yet."),
+            if (snapshot.data!.docs.isEmpty) {
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Center(
+                    child: Text("Nothing in your cart yet."),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: MyButton(
+                      text: "Order Now",
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      isRed: false,
+                    ),
+                  ),
+                ],
               );
             }
 
@@ -182,6 +197,10 @@ class _CartState extends State<Cart> {
                           child: CircularProgressIndicator.adaptive(),
                         );
                       }
+                      if (snapshot.data!.docs.isEmpty) {
+                        return const SizedBox.shrink();
+                      }
+                      print(snapshot.data.toString());
                       final totalPrice = snapshot.data!.docs.fold(
                           0,
                           (previousValue, element) =>

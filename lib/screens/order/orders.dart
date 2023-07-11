@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import 'orderDetails.dart';
+
 class Orders extends StatefulWidget {
   const Orders({super.key});
 
@@ -40,11 +42,25 @@ class _OrdersState extends State<Orders> {
             children: snapshot.data!.docs.map((DocumentSnapshot document) {
               Map<String, dynamic> data =
                   document.data()! as Map<String, dynamic>;
-              return Card(
-                child: ListTile(
-                  title: Text(data["name"] + " x" + data["quantity"]),
-                  subtitle: Text(data["orderID"]),
-                  trailing: Text(data["orderStatus"]),
+              return GestureDetector(
+                onTap: () {
+                  Navigator.of(context).push(MaterialPageRoute(
+                      builder: (context) => OrderDetails(
+                            isCompleted: data["orderStatus"] == "Completed"
+                                ? true
+                                : false,
+                            isIssue:
+                                data["orderStatus"] == "Issue" ? true : false,
+                            isSeller: false,
+                            orderID: data["orderID"],
+                          )));
+                },
+                child: Card(
+                  child: ListTile(
+                    title: Text(data["name"] + " x" + data["quantity"]),
+                    subtitle: Text(data["orderID"]),
+                    trailing: Text(data["orderStatus"]),
+                  ),
                 ),
               );
             }).toList(),
