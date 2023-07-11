@@ -85,16 +85,23 @@ class _DefaultState extends State<Default> {
         centerTitle: true,
         automaticallyImplyLeading: false,
         actions: [
-          Badge.count(
-              largeSize: 20,
-              alignment: Alignment.topLeft,
-              count: cartItemQuantity,
-              child: IconButton(
+          cartItemQuantity != 0
+              ? Badge.count(
+                  largeSize: 20,
+                  alignment: Alignment.topLeft,
+                  count: cartItemQuantity,
+                  child: IconButton(
+                      onPressed: () {
+                        Navigator.of(context).push(MaterialPageRoute(
+                            builder: (context) => const Cart()));
+                      },
+                      icon: const Icon(Icons.shopping_cart)))
+              : IconButton(
                   onPressed: () {
                     Navigator.of(context).push(
                         MaterialPageRoute(builder: (context) => const Cart()));
                   },
-                  icon: const Icon(Icons.shopping_cart))),
+                  icon: const Icon(Icons.shopping_cart))
         ],
       ),
       body: StreamBuilder<QuerySnapshot>(

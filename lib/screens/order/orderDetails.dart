@@ -1,8 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:easy_image_viewer/easy_image_viewer.dart';
 import 'package:flutter/material.dart';
+import 'package:toba/screens/home/home.dart';
 import 'package:toba/screens/order/orders.dart';
 
+// ignore: must_be_immutable
 class OrderDetails extends StatefulWidget {
   final String orderID;
   final bool isSeller;
@@ -525,7 +527,10 @@ class _OrderDetailsState extends State<OrderDetails> {
                                                     .update({
                                                   "orderStatus": "Completed",
                                                 });
-                                                Navigator.of(context).pop();
+                                                Navigator.of(context).push(
+                                                    MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            const HomePage()));
                                               });
                                             }
                                           : null,

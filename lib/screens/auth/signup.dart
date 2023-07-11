@@ -219,6 +219,7 @@ class _SignUpState extends State<SignUp> {
                                       address: addressController.text.trim(),
                                       phoneNo: phoneController.text.trim(),
                                       name: nameController.text.trim(),
+                                      photo: "",
                                     );
                                   }),
                             ),
@@ -252,6 +253,7 @@ class _SignUpState extends State<SignUp> {
     required String password,
     required String phoneNo,
     required String address,
+    required String photo,
   }) async {
     try {
       await FirebaseAuth.instance.createUserWithEmailAndPassword(
@@ -274,6 +276,7 @@ class _SignUpState extends State<SignUp> {
       "email": email,
       "address": address,
       "seller": false,
+      "photo": photo,
     }).then((value) {
       setState(() {
         isLoading = false;
