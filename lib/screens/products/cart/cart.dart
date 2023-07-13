@@ -160,10 +160,11 @@ class _CartState extends State<Cart> {
                                                 deleteAlertBox("Delete?",
                                                     "Are you sure you want to delete this item?",
                                                     () {
+                                                  deleteCartItem(id: data.id);
                                                   updateProductQuantity(
                                                       name: data['name'],
                                                       cqty: data['quantity']);
-                                                  deleteCartItem(id: data.id);
+
                                                   Navigator.pop(context);
                                                 });
                                               },
@@ -200,7 +201,7 @@ class _CartState extends State<Cart> {
                       if (snapshot.data!.docs.isEmpty) {
                         return const SizedBox.shrink();
                       }
-                      print(snapshot.data.toString());
+
                       final totalPrice = snapshot.data!.docs.fold(
                           0,
                           (previousValue, element) =>

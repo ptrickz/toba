@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:toba/screens/home/home.dart';
 import 'package:toba/screens/home/sellerHome.dart';
+import 'package:toba/screens/products/details/deleteConfirmation.dart';
 
 import '../../../widgets/button.dart';
 import '../../../widgets/inputfield.dart';
@@ -39,6 +40,7 @@ class _ProductDetailsState extends State<ProductDetails> {
   final TextEditingController addController = TextEditingController();
   bool isLoading = false;
   bool isEditing = false;
+  bool sureDelete = false;
 
   @override
   void dispose() {
@@ -46,6 +48,7 @@ class _ProductDetailsState extends State<ProductDetails> {
     nameController.dispose();
     descriptionController.dispose();
     quantityController.dispose();
+    addController.dispose();
     super.dispose();
   }
 
@@ -136,266 +139,341 @@ class _ProductDetailsState extends State<ProductDetails> {
               : const SizedBox.shrink(),
         ],
       ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: readProducts,
-        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (snapshot.hasError) {
-            return const Center(
-              child: Text("Something went wrong"),
-            );
-          }
+      body: isLoading
+          ? const Center(
+              child: CircularProgressIndicator(),
+            )
+          : widget.productName != null
+              ? StreamBuilder<QuerySnapshot>(
+                  stream: readProducts,
+                  builder: (BuildContext context,
+                      AsyncSnapshot<QuerySnapshot> snapshot) {
+                    if (snapshot.hasError) {
+                      return const Center(
+                        child: Text("Something went wrong"),
+                      );
+                    }
 
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator.adaptive(),
-            );
-          }
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(
+                        child: CircularProgressIndicator.adaptive(),
+                      );
+                    }
 
-          if (snapshot.data == null) {
-            return const Center(
-              child: Text("No products yet."),
-            );
-          }
+                    if (snapshot.data == null) {
+                      return const Center(
+                        child: Text("No products yet."),
+                      );
+                    }
 
-          return GestureDetector(
-            onTap: () {
-              FocusScope.of(context).unfocus();
-            },
-            child: SizedBox(
-              height: MediaQuery.of(context).size.height,
-              width: MediaQuery.of(context).size.width,
-              child: SingleChildScrollView(
-                  child: Padding(
-                padding: const EdgeInsets.only(top: 10.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    GestureDetector(
+                    return GestureDetector(
                       onTap: () {
-                        final imageProvider =
-                            Image.network(snapshot.data!.docs[0]['imgURL'])
-                                .image;
-                        showImageViewer(context, imageProvider,
-                            onViewerDismissed: () {});
+                        FocusScope.of(context).unfocus();
                       },
-                      child: Container(
-                        decoration:
-                            BoxDecoration(color: Colors.grey[100], boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.5),
-                            spreadRadius: 2,
-                            blurRadius: 5,
-                            offset: const Offset(
-                                0, 3), // changes position of shadow
-                          ),
-                        ]),
-                        width: 340,
-                        height: 250,
-                        child: SizedBox(
-                          width: 120,
-                          height: 150,
-                          child: FadeInImage(
-                            placeholder: const AssetImage("assets/loading.gif"),
-                            image:
-                                NetworkImage(snapshot.data!.docs[0]['imgURL']),
-                            fit: BoxFit.fill,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(10.0),
-                      child: InputField(
-                        isEnabled: isEditing,
-                        isPassword: false,
-                        hasInitValue: true,
-                        labelText: snapshot.data!.docs[0]['name'],
-                        icondata: Icons.dashboard,
-                        controller: isEditing
-                            ? nameController
-                            : TextEditingController(
-                                text: snapshot.data!.docs[0]['name']),
-                        isAuthField: false,
-                        keyboardType: TextInputType.text,
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(10.0),
-                      child: InputField(
-                        isEnabled: isEditing,
-                        isPassword: false,
-                        hasInitValue: true,
-                        labelText: double.parse(snapshot.data!.docs[0]['price'])
-                            .toStringAsFixed(2),
-                        icondata: Icons.attach_money_outlined,
-                        controller: isEditing
-                            ? priceController
-                            : TextEditingController(
-                                text: double.parse(
-                                        snapshot.data!.docs[0]['price'])
-                                    .toStringAsFixed(2)),
-                        isAuthField: false,
-                        keyboardType: TextInputType.number,
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(10.0),
-                      child: Container(
-                        color: Colors.white,
-                        width: 300,
-                        child: TextFormField(
-                          enabled: isEditing,
-                          obscureText: false,
-                          keyboardType: TextInputType.text,
-                          decoration: InputDecoration(
-                            border: OutlineInputBorder(
-                              borderSide: BorderSide(
-                                  color: Colors.grey.shade400, width: 1.0),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            hintText: "Enter Short Description",
-                            prefixIcon: const Icon(Icons.description),
-                          ),
-                          controller: isEditing
-                              ? descriptionController
-                              : TextEditingController(
-                                  text: snapshot.data!.docs[0]['description']),
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(10.0),
-                      child: InputField(
-                        isEnabled: isEditing,
-                        isPassword: false,
-                        hasInitValue: true,
-                        labelText: snapshot.data!.docs[0]['quantity'],
-                        icondata: Icons.numbers,
-                        controller: isEditing
-                            ? quantityController
-                            : TextEditingController(
-                                text: snapshot.data!.docs[0]['quantity']),
-                        isAuthField: false,
-                        keyboardType: TextInputType.number,
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(10),
-                      child: isEditing
-                          ? MyButton(
-                              text: "Delete Item",
-                              onPressed: () {
-                                alertBox("Delete Product?",
-                                    "Are you sure you want to delete this product?",
-                                    () {
-                                  final docBooking = FirebaseFirestore.instance
-                                      .collection('products')
-                                      .doc("T-${widget.productName}");
-                                  final imageRef = FirebaseStorage.instance
-                                      .ref("images/${widget.image}");
-                                  Navigator.of(context).pushReplacement(
-                                      MaterialPageRoute(
-                                          builder: (context) =>
-                                              const SellerHome()));
-                                  docBooking.delete();
-                                  imageRef.delete();
-                                });
-                              },
-                              isRed: true)
-                          : int.parse(snapshot.data!.docs[0]['quantity']) > 0
-                              ? MyButton(
-                                  isRed: false,
-                                  text: widget.isSeller == true
-                                      ? "Edit Product"
-                                      : "Add to Cart",
-                                  onPressed: () {
-                                    widget.isSeller == true
-                                        ? setState(() {
-                                            isEditing = true;
-                                          })
-                                        : setState(() {
-                                            isLoading = true;
-                                            addItemBox("Add to Cart?",
-                                                "Insert Number of Items to add to cart.",
-                                                () {
-                                              String dateF = DateTime.now()
-                                                  .toString()
-                                                  .substring(0, 10);
-                                              String time = DateTime.now()
-                                                  .toString()
-                                                  .substring(10, 19)
-                                                  .replaceAll(" ", "")
-                                                  .replaceAll(":", "");
-                                              String emailFormatted =
-                                                  FirebaseAuth.instance
-                                                      .currentUser!.email!
-                                                      .toLowerCase()
-                                                      .replaceAll(
-                                                          "@gmail.com", "")
-                                                      .replaceAll(
-                                                          "@yahoo.com", "")
-                                                      .toUpperCase();
+                      child: SizedBox(
+                        height: MediaQuery.of(context).size.height,
+                        width: MediaQuery.of(context).size.width,
+                        child: SingleChildScrollView(
+                            child: Padding(
+                          padding: const EdgeInsets.only(top: 10.0),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              GestureDetector(
+                                onTap: () {
+                                  final imageProvider = Image.network(
+                                          snapshot.data!.docs[0]['imgURL'])
+                                      .image;
+                                  showImageViewer(context, imageProvider,
+                                      onViewerDismissed: () {});
+                                },
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                      color: Colors.grey[100],
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.grey.withOpacity(0.5),
+                                          spreadRadius: 2,
+                                          blurRadius: 5,
+                                          offset: const Offset(0,
+                                              3), // changes position of shadow
+                                        ),
+                                      ]),
+                                  width: 340,
+                                  height: 250,
+                                  child: SizedBox(
+                                    width: 120,
+                                    height: 150,
+                                    child: FadeInImage(
+                                      placeholder: const AssetImage(
+                                          "assets/loading.gif"),
+                                      image: NetworkImage(
+                                          snapshot.data!.docs[0]['imgURL']),
+                                      fit: BoxFit.fill,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(10.0),
+                                child: InputField(
+                                  isEnabled: isEditing,
+                                  isPassword: false,
+                                  hasInitValue: true,
+                                  labelText: snapshot.data!.docs[0]['name'],
+                                  icondata: Icons.dashboard,
+                                  controller: isEditing
+                                      ? nameController
+                                      : TextEditingController(
+                                          text: snapshot.data!.docs[0]['name']),
+                                  isAuthField: false,
+                                  keyboardType: TextInputType.text,
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(10.0),
+                                child: InputField(
+                                  isEnabled: isEditing,
+                                  isPassword: false,
+                                  hasInitValue: true,
+                                  labelText: double.parse(
+                                          snapshot.data!.docs[0]['price'])
+                                      .toStringAsFixed(2),
+                                  icondata: Icons.attach_money_outlined,
+                                  controller: isEditing
+                                      ? priceController
+                                      : TextEditingController(
+                                          text: double.parse(snapshot
+                                                  .data!.docs[0]['price'])
+                                              .toStringAsFixed(2)),
+                                  isAuthField: false,
+                                  keyboardType: TextInputType.number,
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(10.0),
+                                child: Container(
+                                  color: Colors.white,
+                                  width: 300,
+                                  child: TextFormField(
+                                    enabled: isEditing,
+                                    obscureText: false,
+                                    keyboardType: TextInputType.text,
+                                    decoration: InputDecoration(
+                                      border: OutlineInputBorder(
+                                        borderSide: BorderSide(
+                                            color: Colors.grey.shade400,
+                                            width: 1.0),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      hintText: "Enter Short Description",
+                                      prefixIcon: const Icon(Icons.description),
+                                    ),
+                                    controller: isEditing
+                                        ? descriptionController
+                                        : TextEditingController(
+                                            text: snapshot.data!.docs[0]
+                                                ['description']),
+                                  ),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(10.0),
+                                child: InputField(
+                                  isEnabled: isEditing,
+                                  isPassword: false,
+                                  hasInitValue: true,
+                                  labelText: snapshot.data!.docs[0]['quantity'],
+                                  icondata: Icons.numbers,
+                                  controller: isEditing
+                                      ? quantityController
+                                      : TextEditingController(
+                                          text: snapshot.data!.docs[0]
+                                              ['quantity']),
+                                  isAuthField: false,
+                                  keyboardType: TextInputType.number,
+                                ),
+                              ),
+                              isEditing
+                                  ? widget.isSeller == true
+                                      ? SizedBox(
+                                          width: 300,
+                                          child: SwitchListTile.adaptive(
+                                            value: sureDelete,
+                                            onChanged: (value) {
+                                              setState(() {
+                                                sureDelete = value;
+                                              });
+                                            },
+                                            title: const Text(
+                                                "Enable Delete Button"),
+                                          ),
+                                        )
+                                      : const SizedBox.shrink()
+                                  : const SizedBox.shrink(),
+                              Padding(
+                                padding: const EdgeInsets.all(10),
+                                child: isEditing
+                                    ? sureDelete
+                                        ? MyButton(
+                                            text: "Delete Item",
+                                            onPressed: () {
+                                              Navigator.of(context).pushReplacement(
+                                                  MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          DeleteConfirmationPage(
+                                                            productName: widget
+                                                                .productName,
+                                                          )));
+                                            },
+                                            isRed: true)
+                                        : Padding(
+                                            padding: const EdgeInsets.all(8.0),
+                                            child: ElevatedButton(
+                                              onPressed: () {},
+                                              style: ElevatedButton.styleFrom(
+                                                  backgroundColor: Colors.grey,
+                                                  foregroundColor: Colors.white,
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            8),
+                                                  ),
+                                                  fixedSize:
+                                                      const Size(250, 50)),
+                                              child: const Text(
+                                                "Delete Item",
+                                                style: TextStyle(fontSize: 18),
+                                              ),
+                                            ),
+                                          )
+                                    : int.parse(snapshot.data!.docs[0]
+                                                ['quantity']) >
+                                            0
+                                        ? MyButton(
+                                            isRed: false,
+                                            text: widget.isSeller == true
+                                                ? "Edit Product"
+                                                : "Add to Cart",
+                                            onPressed: () {
+                                              widget.isSeller == true
+                                                  ? setState(() {
+                                                      isEditing = true;
+                                                    })
+                                                  : setState(() {
+                                                      isLoading = true;
+                                                      addItemBox("Add to Cart?",
+                                                          "Insert Number of Items to add to cart.",
+                                                          () {
+                                                        String dateF =
+                                                            DateTime.now()
+                                                                .toString()
+                                                                .substring(
+                                                                    0, 10);
+                                                        String time =
+                                                            DateTime.now()
+                                                                .toString()
+                                                                .substring(
+                                                                    10, 19)
+                                                                .replaceAll(
+                                                                    " ", "")
+                                                                .replaceAll(
+                                                                    ":", "");
+                                                        String emailFormatted =
+                                                            FirebaseAuth
+                                                                .instance
+                                                                .currentUser!
+                                                                .email!
+                                                                .toLowerCase()
+                                                                .replaceAll(
+                                                                    "@gmail.com",
+                                                                    "")
+                                                                .replaceAll(
+                                                                    "@yahoo.com",
+                                                                    "")
+                                                                .toUpperCase();
 
-                                              if (int.parse(addController.text
-                                                      .trim()) <=
-                                                  int.parse(widget.quantity!)) {
-                                                createCartItems(
-                                                        email: FirebaseAuth
-                                                            .instance
-                                                            .currentUser!
-                                                            .email!,
-                                                        id:
-                                                            "$emailFormatted-$time-$dateF",
-                                                        name:
-                                                            widget.productName!,
-                                                        price: double.parse(
-                                                                widget.price!)
-                                                            .toStringAsFixed(2),
-                                                        quantity: addController
-                                                            .text
-                                                            .trim(),
-                                                        image: snapshot.data!
-                                                            .docs[0]['imgURL'],
-                                                        date: DateTime.now())
-                                                    .then((value) {
-                                                  try {
-                                                    reduceQuantity();
-                                                  } catch (e) {
-                                                    if (kDebugMode) {
-                                                      print(e);
-                                                    }
-                                                  }
-                                                }).then((value) {
-                                                  setState(() {
-                                                    isLoading = false;
-                                                  });
-                                                  Navigator.of(context).pushReplacement(
-                                                      MaterialPageRoute(
-                                                          builder: (context) =>
-                                                              widget.isSeller ==
-                                                                      true
-                                                                  ? const SellerHome()
-                                                                  : const HomePage()));
-                                                });
-                                              } else {
-                                                alertBox("Error",
-                                                    "Quantity is more than available stock.",
-                                                    () {
-                                                  Navigator.pop(context);
-                                                });
-                                              }
-                                            });
-                                          });
-                                  })
-                              : const SizedBox.shrink(),
-                    ),
-                  ],
+                                                        if (int.parse(
+                                                                addController
+                                                                    .text
+                                                                    .trim()) <=
+                                                            int.parse(widget
+                                                                .quantity!)) {
+                                                          try {
+                                                            createCartItems(
+                                                                    email: FirebaseAuth
+                                                                        .instance
+                                                                        .currentUser!
+                                                                        .email!,
+                                                                    id:
+                                                                        "$emailFormatted-$time-$dateF",
+                                                                    name: widget
+                                                                        .productName!,
+                                                                    price: double.parse(
+                                                                            widget
+                                                                                .price!)
+                                                                        .toStringAsFixed(
+                                                                            2),
+                                                                    quantity:
+                                                                        addController
+                                                                            .text
+                                                                            .trim(),
+                                                                    image: snapshot
+                                                                            .data!
+                                                                            .docs[0]
+                                                                        [
+                                                                        'imgURL'],
+                                                                    date: DateTime
+                                                                        .now())
+                                                                .then((value) {
+                                                              try {
+                                                                reduceQuantity();
+                                                              } catch (e) {
+                                                                if (kDebugMode) {
+                                                                  print(e);
+                                                                }
+                                                              }
+                                                            }).then((value) {
+                                                              setState(() {
+                                                                isLoading =
+                                                                    false;
+                                                              });
+                                                              Navigator.of(
+                                                                      context)
+                                                                  .pushReplacement(MaterialPageRoute(
+                                                                      builder: (context) => widget.isSeller ==
+                                                                              true
+                                                                          ? const SellerHome()
+                                                                          : const HomePage()));
+                                                            });
+                                                          } catch (e) {
+                                                            if (kDebugMode) {
+                                                              print(e);
+                                                            }
+                                                          }
+                                                        } else {
+                                                          alertBox("Error",
+                                                              "Quantity is more than available stock.",
+                                                              () {
+                                                            Navigator.pop(
+                                                                context);
+                                                          });
+                                                        }
+                                                      });
+                                                    });
+                                            })
+                                        : const SizedBox.shrink(),
+                              ),
+                            ],
+                          ),
+                        )),
+                      ),
+                    );
+                  },
+                )
+              : const Center(
+                  child: Text("No products yet."),
                 ),
-              )),
-            ),
-          );
-        },
-      ),
     );
   }
 

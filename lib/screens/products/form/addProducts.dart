@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -94,6 +95,9 @@ class _AddProductsState extends State<AddProducts> {
                               GestureDetector(
                                 onTap: () {
                                   selectImage();
+                                  setState(() {
+                                    isLoading = pickedFile != null;
+                                  });
                                 },
                                 child: Container(
                                     decoration: BoxDecoration(
@@ -115,22 +119,17 @@ class _AddProductsState extends State<AddProducts> {
                                     child: pickedFile != null
                                         ? Stack(children: [
                                             Center(
-                                              child: Expanded(
-                                                child: Container(
-                                                  color: Colors.blue[100],
-                                                  child: ColorFiltered(
-                                                    colorFilter:
-                                                        ColorFilter.mode(
-                                                            Colors
-                                                                .black
-                                                                .withOpacity(
-                                                                    0.5),
-                                                            BlendMode.darken),
-                                                    child: Image.file(
-                                                      File(pickedFile!.path!),
-                                                      width: double.infinity,
-                                                      fit: BoxFit.fill,
-                                                    ),
+                                              child: Container(
+                                                color: Colors.blue[100],
+                                                child: ColorFiltered(
+                                                  colorFilter: ColorFilter.mode(
+                                                      Colors.black
+                                                          .withOpacity(0.5),
+                                                      BlendMode.darken),
+                                                  child: Image.file(
+                                                    File(pickedFile!.path!),
+                                                    width: double.infinity,
+                                                    fit: BoxFit.fill,
                                                   ),
                                                 ),
                                               ),
@@ -245,7 +244,8 @@ class _AddProductsState extends State<AddProducts> {
     required String imgURL,
   }) async {
     //refer doc
-    final docProduct = FirebaseFirestore.instance.collection('products').doc();
+    final docProduct =
+        FirebaseFirestore.instance.collection('products').doc("T-$name");
     final product = Products(
         name: name,
         price: price,

@@ -68,17 +68,17 @@ class _DefaultState extends State<Default> {
   @override
   void initState() {
     super.initState();
-    cartref.listen((event) {
-      setState(() {
-        cartItemQuantity = event.docs.length;
-      });
-    });
   }
 
   final RegExp regExp =
       RegExp(r'(I[A-Za-z0-9]+(_[A-Za-z0-9]+|-[A-Za-z0-9]+)+)\.[A-Za-z]{3}');
   @override
   Widget build(BuildContext context) {
+    cartref.listen((event) {
+      setState(() {
+        cartItemQuantity = event.docs.length;
+      });
+    });
     return Scaffold(
       appBar: AppBar(
         title: const Text("Home"),
