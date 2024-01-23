@@ -359,106 +359,88 @@ class _ProductDetailsState extends State<ProductDetails> {
                                                   ? setState(() {
                                                       isEditing = true;
                                                     })
-                                                  : setState(() {
-                                                      isLoading = true;
-                                                      addItemBox("Add to Cart?",
-                                                          "Insert Number of Items to add to cart.",
-                                                          () {
-                                                        String dateF =
-                                                            DateTime.now()
-                                                                .toString()
-                                                                .substring(
-                                                                    0, 10);
-                                                        String time =
-                                                            DateTime.now()
-                                                                .toString()
-                                                                .substring(
-                                                                    10, 19)
-                                                                .replaceAll(
-                                                                    " ", "")
-                                                                .replaceAll(
-                                                                    ":", "");
-                                                        String emailFormatted =
-                                                            FirebaseAuth
-                                                                .instance
-                                                                .currentUser!
-                                                                .email!
-                                                                .toLowerCase()
-                                                                .replaceAll(
-                                                                    "@gmail.com",
-                                                                    "")
-                                                                .replaceAll(
-                                                                    "@yahoo.com",
-                                                                    "")
-                                                                .toUpperCase();
+                                                  : addItemBox("Add to Cart?",
+                                                      "Insert Number of Items to add to cart.",
+                                                      () {
+                                                      String dateF =
+                                                          DateTime.now()
+                                                              .toString()
+                                                              .substring(0, 10);
+                                                      String time =
+                                                          DateTime.now()
+                                                              .toString()
+                                                              .substring(10, 19)
+                                                              .replaceAll(
+                                                                  " ", "")
+                                                              .replaceAll(
+                                                                  ":", "");
+                                                      String emailFormatted =
+                                                          FirebaseAuth
+                                                              .instance
+                                                              .currentUser!
+                                                              .email!
+                                                              .toLowerCase()
+                                                              .replaceAll(
+                                                                  "@gmail.com",
+                                                                  "")
+                                                              .replaceAll(
+                                                                  "@yahoo.com",
+                                                                  "")
+                                                              .toUpperCase();
 
-                                                        if (int.parse(
-                                                                addController
-                                                                    .text
-                                                                    .trim()) <=
-                                                            int.parse(widget
-                                                                .quantity!)) {
-                                                          try {
-                                                            createCartItems(
-                                                                    email: FirebaseAuth
-                                                                        .instance
-                                                                        .currentUser!
-                                                                        .email!,
-                                                                    id:
-                                                                        "$emailFormatted-$time-$dateF",
-                                                                    name: widget
-                                                                        .productName!,
-                                                                    price: double.parse(
-                                                                            widget
-                                                                                .price!)
-                                                                        .toStringAsFixed(
-                                                                            2),
-                                                                    quantity:
-                                                                        addController
-                                                                            .text
-                                                                            .trim(),
-                                                                    image: snapshot
-                                                                            .data!
-                                                                            .docs[0]
-                                                                        [
-                                                                        'imgURL'],
-                                                                    date: DateTime
-                                                                        .now())
-                                                                .then((value) {
-                                                              try {
-                                                                reduceQuantity();
-                                                              } catch (e) {
-                                                                if (kDebugMode) {
-                                                                  print(e);
-                                                                }
+                                                      if (int.parse(
+                                                              addController.text
+                                                                  .trim()) <=
+                                                          int.parse(widget
+                                                              .quantity!)) {
+                                                        try {
+                                                          createCartItems(
+                                                                  email: FirebaseAuth
+                                                                      .instance
+                                                                      .currentUser!
+                                                                      .email!,
+                                                                  id:
+                                                                      "$emailFormatted-$time-$dateF",
+                                                                  name: widget
+                                                                      .productName!,
+                                                                  price: double.parse(widget.price!)
+                                                                      .toStringAsFixed(
+                                                                          2),
+                                                                  quantity:
+                                                                      addController
+                                                                          .text
+                                                                          .trim(),
+                                                                  image: snapshot
+                                                                          .data!
+                                                                          .docs[0]
+                                                                      [
+                                                                      'imgURL'],
+                                                                  date: DateTime
+                                                                      .now())
+                                                              .then((value) {
+                                                            try {
+                                                              reduceQuantity();
+                                                            } catch (e) {
+                                                              if (kDebugMode) {
+                                                                print(e);
                                                               }
-                                                            }).then((value) {
-                                                              setState(() {
-                                                                isLoading =
-                                                                    false;
-                                                              });
-                                                              Navigator.of(
-                                                                      context)
-                                                                  .pushReplacement(MaterialPageRoute(
-                                                                      builder: (context) => widget.isSeller ==
-                                                                              true
-                                                                          ? const SellerHome()
-                                                                          : const HomePage()));
-                                                            });
-                                                          } catch (e) {
-                                                            if (kDebugMode) {
-                                                              print(e);
                                                             }
-                                                          }
-                                                        } else {
-                                                          alertBox("Error",
-                                                              "Quantity is more than available stock.",
-                                                              () {
-                                                            Navigator.pop(
-                                                                context);
                                                           });
+                                                          Navigator.pop(
+                                                              context);
+                                                        } catch (e) {
+                                                          if (kDebugMode) {
+                                                            print(e);
+                                                          }
                                                         }
-                                                      });
+                                                      } else {
+                                                        alertBox("Error",
+                                                            "Quantity is more than available stock.",
+                                                            () {
+                                                          Navigator.pop(
+                                                              context);
+                                                        });
+                                                      }
                                                     });
                                             })
                                         : const SizedBox.shrink(),
@@ -481,7 +463,7 @@ class _ProductDetailsState extends State<ProductDetails> {
     final int cartQuantity = int.parse(addController.text.trim());
     await FirebaseFirestore.instance
         .collection('products')
-        .doc("T-${widget.productName}")
+        .doc("T-${widget.productName!.replaceAll(" ", "")}")
         .update({
       'quantity': (quantity - cartQuantity).toString() == "0"
           ? "0"

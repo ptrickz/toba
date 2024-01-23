@@ -38,33 +38,34 @@ class _OrdersState extends State<Orders> {
               child: Text("No orders yet"),
             );
           }
-          return ListView(
-            children: snapshot.data!.docs.map((DocumentSnapshot document) {
-              Map<String, dynamic> data =
-                  document.data()! as Map<String, dynamic>;
-              return GestureDetector(
-                onTap: () {
-                  Navigator.of(context).push(MaterialPageRoute(
-                      builder: (context) => OrderDetails(
-                            isCompleted: data["orderStatus"] == "Completed"
-                                ? true
-                                : false,
-                            isIssue:
-                                data["orderStatus"] == "Issue" ? true : false,
-                            isSeller: false,
-                            orderID: data["orderID"],
-                          )));
-                },
-                child: Card(
-                  child: ListTile(
-                    title: Text(data["name"] + " x" + data["quantity"]),
-                    subtitle: Text(data["orderID"]),
-                    trailing: Text(data["orderStatus"]),
-                  ),
-                ),
-              );
-            }).toList(),
-          );
+          return ListView.builder(
+              itemCount: snapshot.data!.docs.length,
+              itemBuilder: (context, index) => GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).push(MaterialPageRoute(
+                        builder: (context) => OrderDetails(
+                              isCompleted: snapshot.data!.docs[index]
+                                          ['orderStatus'] ==
+                                      "Completed"
+                                  ? true
+                                  : false,
+                              isIssue: snapshot.data!.docs[index]
+                                          ["orderStatus"] ==
+                                      "Issue"
+                                  ? true
+                                  : false,
+                              isSeller: false,
+                              orderID: snapshot.data!.docs[index]["orderID"],
+                            )));
+                  },
+                  child: Card(
+                      child: ListTile(
+                    title: Text(snapshot.data!.docs[index]["name"] +
+                        " x" +
+                        snapshot.data!.docs[index]["quantity"]),
+                    subtitle: Text(snapshot.data!.docs[index]["orderID"]),
+                    trailing: Text(snapshot.data!.docs[index]["orderStatus"]),
+                  ))));
         },
       ),
     );
@@ -73,6 +74,11 @@ class _OrdersState extends State<Orders> {
   Stream<QuerySnapshot> get getOrders {
     return FirebaseFirestore.instance
         .collection("orders")
+        .orderBy('orderStatus', descending: true)
+        .orderBy(
+          'orderDate',
+          descending: true,
+        )
         .where("email", isEqualTo: FirebaseAuth.instance.currentUser!.email!)
         .snapshots();
   }

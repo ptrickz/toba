@@ -244,8 +244,9 @@ class _AddProductsState extends State<AddProducts> {
     required String imgURL,
   }) async {
     //refer doc
-    final docProduct =
-        FirebaseFirestore.instance.collection('products').doc("T-$name");
+    final docProduct = FirebaseFirestore.instance
+        .collection('products')
+        .doc("T-${name.replaceAll(" ", "")}");
     final product = Products(
         name: name,
         price: price,
